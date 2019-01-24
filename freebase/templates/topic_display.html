@@ -1,0 +1,75 @@
+{% macro to_link(desc) -%}
+{% if desc.label %}
+<a href="{{ desc.url }}" lang="{{ desc.label.language }}" dir="auto">{{ desc.label.value }}</a>
+{% else %}
+<a href="{{ desc.url }}">{{ desc.id }}</a>
+{% endif %}
+{%- endmacro %}
+
+
+{% extends "base.html" %}
+{% block navLinks %}
+<li class="nav-item">
+    <a class="nav-link" href="/freebase/">Home</a>
+</li>
+{% endblock %}
+{% block head %}
+<link rel="canonical" href="{{topic.canonical}}">
+<link rel="license" href="http://creativecommons.org/licenses/by/2.5/">
+
+<title>Freebase - {% if topic.label %}{{ topic.label.value }}{% else %}{{ topic.id }}{% endif %}</title>
+{% endblock %}
+{% block main %}
+<main role="main">
+    <div class="content">
+        <div class="card">
+            <div class="card-header">
+                <h1 class="card-title">
+                    {% if topic.label %}
+                    <span lang="{{ topic.label.language }}" dir="auto">{{ topic.label.value }}</span>
+                    <small>({{ topic.id }})</small>
+                    {% else %}
+                    {{ topic.id }}
+                    {% endif %}
+                </h1>
+                {% if topic.description %}
+                <h5 class="card-subtitle text-muted" lang="{{ topic.description.language }}" dir="auto">{{
+                    topic.description.value }}</h5>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if topic.notable_types %}
+                <dl>
+                    <dt>Notable types</dt>
+                    <dd>
+                        {%- for type in topic.notable_types %}
+                        {{ to_link(type) }}
+                        {%- endfor %}
+                    </dd>
+                </dl>
+                {% endif %}
+                {% if topic.other_types %}
+                <dl>
+                    <dt>Other types</dt>
+                    <dd>
+                        {%- for type in topic.other_types %}
+                        {{ to_link(type) }}
+                        {%- endfor %}
+                    </dd>
+                </dl>
+                {% endif %}
+                {% if topic.fkeys %}
+                <dl>
+                    <dt>Keys</dt>
+                    <dd>
+                        {%- for key in topic.fkeys %}
+                        {{ key }}
+                        {%- endfor %}
+                    </dd>
+                </dl>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

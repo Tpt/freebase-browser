@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css"
+          rel="stylesheet">
+    <style>
+        body {
+            padding-top: 1.5rem;
+            padding-bottom: 1.5rem;
+        }
+
+        .header,
+        .content,
+        .footer {
+            padding-right: 1rem;
+            padding-left: 1rem;
+        }
+
+        .header {
+            padding-bottom: 1rem;
+            border-bottom: .05rem solid #e5e5e5;
+        }
+
+        .footer {
+            padding-top: 1.5rem;
+            color: #777;
+            border-top: .05rem solid #e5e5e5;
+        }
+
+        @media (min-width: 48rem) {
+            .container {
+                max-width: 46rem;
+            }
+        }
+
+        .jumbotron {
+            text-align: center;
+            border-bottom: .05rem solid #e5e5e5;
+        }
+
+        .content {
+            margin: 3rem 0;
+        }
+    </style>
+    {% block head %}
+    {% endblock %}
+</head>
+<body>
+<div class="container">
+    <header class="header clearfix">
+        <nav>
+            <ul class="nav nav-pills float-right">
+                {% block navLinks %}
+                <li class="nav-item">
+                    <a class="nav-link" href="/freebase/">Home</a>
+                </li>
+                {% endblock %}
+            </ul>
+        </nav>
+        <h3 class="text-muted">Freebase Browser</h3>
+    </header>
+    <main role="main">
+        {% block main %}{% endblock %}
+    </main>
+    <footer class="footer">
+        <p>
+            The data is extracted from <a href="https://developers.google.com/freebase/">the latest Freebase dumps</a>.
+            They are available under the <a rel="license" href="http://creativecommons.org/licenses/by/2.5/">Licence
+            Creative Commons BY 2.5</a>.
+            See <a href="https://developers.google.com/freebase/">the dump page</a> for more about the attribution.
+        </p>
+        <p>
+            Code under <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache Licence</a> available on <a
+                href="https://github.com/Tpt/freebase-browser">GitHub</a>.
+        </p>
+    </footer>
+</div>
+</body>
+</html>

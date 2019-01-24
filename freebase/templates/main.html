@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block navLinks %}
+<li class="nav-item">
+    <a class="nav-link active" href="/freebase/">Home</a>
+</li>
+{% endblock %}
+{% block head %}
+<meta name="description" content="A simple UI on top of some Freebase data">
+<title>Freebase browser</title>
+{% endblock %}
+{% block main %}
+<main role="main">
+    <div class="jumbotron">
+        <h1 class="display-3">Freebase browser</h1>
+        <p class="lead">A simple UI on top of <a href="https://en.wikipedia.org/wiki/Freebase">Freebase</a> allowing to
+            read a part of Freebase content.</p>
+        <p>The data is extracted from <a href="https://developers.google.com/freebase/">the latest Freebase dumps</a>
+            and available under the <a rel="license" href="https://creativecommons.org/licenses/by/2.5/">Licence
+                Creative
+                Commons BY 2.5</a>.</p>
+    </div>
+
+    <div class="content">
+        <p>Some entity examples</p>
+        <ul>
+            <li>TODO</li>
+        </ul>
+    </div>
+</main>
+{% endblock %}
