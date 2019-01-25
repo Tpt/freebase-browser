@@ -1,6 +1,6 @@
 import json
 
-from flask import Flask, render_template, request, abort
+from flask import Flask, render_template, request, abort, redirect
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
@@ -22,6 +22,11 @@ def shutdown_session(exception=None):
 @app.route('/')
 def main():
     return render_template('main.html')
+
+
+@app.route('/freebase/<path:path>')
+def base(path):
+    return redirect(path)
 
 
 @app.route('/m/<mid>')
@@ -52,7 +57,7 @@ def get_4_step_textid(space, group, type, property):
 def to_simple_dict(topic):
     return {
         'id': topic.textid if topic.textid else topic.mid,
-        'url': topic.textid if topic.textid else topic.mid,
+        'url': '/freebase{}'.format(topic.textid if topic.textid else topic.mid),
         'label': content_negotiation(topic.labels),
         'description': content_negotiation(topic.descriptions)
     }
