@@ -2,21 +2,13 @@ import json
 
 from flask import Flask, render_template, request, abort, redirect
 from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
-from freebase.model import Base, Topic, get_db_url
+from freebase.model import Topic, get_db_url
 
 app = Flask(__name__)
-
 engine = create_engine(get_db_url())
-db = scoped_session(sessionmaker(bind=engine))
-Base.query = db.query_property()
-Base.metadata.create_all(engine)
-
-
-@app.teardown_appcontext
-def shutdown_session(exception=None):
-    db.remove()
+Session = sessionmaker(bind=engine)
 
 
 @app.route('/')
@@ -73,15 +65,19 @@ def to_full_dict(topic):
 
 
 def get_topic(**filters):
-    topic = db.query(Topic).filter_by(**filters).first()
-    if topic is None:
-        abort(404)
+    db = Session()
+    try:
+        topic = db.query(Topic).filter_by(**filters).first()
+        if topic is None:
+            abort(404)
 
-    mimetype = request.accept_mimetypes.best_match(['text/html', 'application/ld+json', 'application/json'])
-    if mimetype == 'application/json' or mimetype == 'application/ld+json':
-        return app.response_class(json.dumps(topic.jsonld), mimetype=mimetype)
-    else:
-        return render_template('topic_display.html', topic=to_full_dict(topic))
+        mimetype = request.accept_mimetypes.best_match(['text/html', 'application/ld+json', 'application/json'])
+        if mimetype == 'application/json' or mimetype == 'application/ld+json':
+            return app.response_class(json.dumps(topic.jsonld), mimetype=mimetype)
+        else:
+            return render_template('topic_display.html', topic=to_full_dict(topic))
+    finally:
+        db.close()
 
 
 def content_negotiation(labels):
