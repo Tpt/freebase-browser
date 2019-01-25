@@ -16,6 +16,7 @@
 {% block head %}
 <link rel="canonical" href="{{topic.canonical}}">
 <link rel="license" href="http://creativecommons.org/licenses/by/2.5/">
+<script type="application/ld+json">{{topic.jsonld|safe}}</script>
 
 <title>Freebase - {% if topic.label %}{{ topic.label.value }}{% else %}{{ topic.id }}{% endif %}</title>
 {% endblock %}

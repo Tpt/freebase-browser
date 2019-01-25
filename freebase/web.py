@@ -62,6 +62,7 @@ def to_full_dict(topic):
     desc['notable_types'] = [to_simple_dict(type.type) for type in topic.types if type.notable]
     desc['other_types'] = [to_simple_dict(type.type) for type in topic.types if not type.notable]
     desc['fkeys'] = [key.key for key in topic.keys]
+    desc['jsonld'] = json.dumps(topic.jsonld)
     return desc
 
 
