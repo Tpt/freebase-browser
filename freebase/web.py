@@ -19,32 +19,32 @@ def shutdown_session(exception=None):
     db.remove()
 
 
-@app.route('/freebase/')
+@app.route('/')
 def main():
     return render_template('main.html')
 
 
-@app.route('/freebase/m/<mid>')
+@app.route('/m/<mid>')
 def get_mmid(mid):
     return get_topic(mid='/m/{}'.format(mid))
 
 
-@app.route('/freebase/g/<mid>')
+@app.route('/g/<mid>')
 def get_gmid(mid):
     return get_topic(mid='/g/{}'.format(mid))
 
 
-@app.route('/freebase/<group>/<type>')
+@app.route('/<group>/<type>')
 def get_2_step_textid(group, type):
     return get_topic(textid='/{}/{}'.format(group, type))
 
 
-@app.route('/freebase/<group>/<type>/<property>')
+@app.route('/<group>/<type>/<property>')
 def get_3_step_textid(group, type, property):
     return get_topic(textid='/{}/{}/{}'.format(group, type, property))
 
 
-@app.route('/freebase/<space>/<group>/<type>/<property>')
+@app.route('/<space>/<group>/<type>/<property>')
 def get_4_step_textid(space, group, type, property):
     return get_topic(textid='/{}/{}/{}/{}'.format(space, group, type, property))
 
@@ -52,7 +52,7 @@ def get_4_step_textid(space, group, type, property):
 def to_simple_dict(topic):
     return {
         'id': topic.textid if topic.textid else topic.mid,
-        'url': '/freebase{}'.format(topic.textid if topic.textid else topic.mid),
+        'url': topic.textid if topic.textid else topic.mid,
         'label': content_negotiation(topic.labels),
         'description': content_negotiation(topic.descriptions)
     }
