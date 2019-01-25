@@ -91,7 +91,7 @@ def load(
             logger.warning('Not able to get mid for key {}'.format(s))
             return
         key = decode_key(key)
-        if len(key) >= 255:
+        if len(key) >= MAX_VARCHAR_SIZE:
             logger.error('Not able to add too long key: {}'.format(key))
             return
         try:
@@ -119,11 +119,11 @@ def load(
         def triple(self, s, p, o):
             try:
                 if p == type_object_name:
-                    add_to_language_column(Label, s, o, 255)
+                    add_to_language_column(Label, s, o, MAX_VARCHAR_SIZE)
                 elif p == common_topic_description:
                     add_to_language_column(Description, s, o, sys.maxsize)
                 elif p == common_topic_alias:
-                    add_to_language_column(Alias, s, o, 255)
+                    add_to_language_column(Alias, s, o, MAX_VARCHAR_SIZE)
                 elif p == type_object_type:
                     add_type(s, o, False)
                 elif p == common_topic_notable_types:

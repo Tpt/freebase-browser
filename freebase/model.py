@@ -5,6 +5,8 @@ from sqlalchemy import Column, Integer, String, Text, ForeignKey, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, relationship, backref
 
+MAX_VARCHAR_SIZE = 191
+
 
 def get_db_url():
     path = os.path.join(os.path.dirname(__file__), '../database_url.txt')
@@ -23,7 +25,7 @@ class Topic(Base):
 
     id = Column(Integer, primary_key=True)
     mid = Column(String(13), unique=True, nullable=True)
-    textid = Column(String(128), unique=True, nullable=True)
+    textid = Column(String(MAX_VARCHAR_SIZE), unique=True, nullable=True)
 
     @property
     def jsonld(self):
@@ -51,7 +53,7 @@ class Label(Base):
     topic_id = Column(Integer, ForeignKey('topics.id'), nullable=False, primary_key=True)
     topic = relationship(Topic, backref=backref('labels', lazy=True))
     language = Column(String(5), nullable=False, primary_key=True)
-    value = Column(String(255), nullable=False)
+    value = Column(String(MAX_VARCHAR_SIZE), nullable=False)
 
 
 class Description(Base):
@@ -69,7 +71,7 @@ class Alias(Base):
     topic_id = Column(Integer, ForeignKey('topics.id'), nullable=False, primary_key=True)
     topic = relationship(Topic, backref=backref('aliases', lazy=True))
     language = Column(String(5), nullable=False, primary_key=True)
-    value = Column(String(255), nullable=False, primary_key=True)
+    value = Column(String(MAX_VARCHAR_SIZE), nullable=False, primary_key=True)
 
 
 class Type(Base):
@@ -87,7 +89,7 @@ class Key(Base):
 
     topic_id = Column(Integer, ForeignKey('topics.id'), nullable=False, primary_key=True)
     topic = relationship(Topic, backref=backref('keys', lazy=True))
-    key = Column(String(255), nullable=False, primary_key=True)
+    key = Column(String(MAX_VARCHAR_SIZE), nullable=False, primary_key=True)
 
 
 @lru_cache(maxsize=1024)
