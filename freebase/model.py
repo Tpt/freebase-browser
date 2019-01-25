@@ -23,7 +23,7 @@ class Topic(Base):
 
     id = Column(Integer, primary_key=True)
     mid = Column(String(13), unique=True, nullable=True)
-    textid = Column(Text, unique=True, nullable=True)
+    textid = Column(String(128), unique=True, nullable=True)
 
     @property
     def jsonld(self):
@@ -51,7 +51,7 @@ class Label(Base):
     topic_id = Column(Integer, ForeignKey('topics.id'), nullable=False, primary_key=True)
     topic = relationship(Topic, backref=backref('labels', lazy=True))
     language = Column(String(5), nullable=False, primary_key=True)
-    value = Column(Text, nullable=False, primary_key=True)
+    value = Column(String(512), nullable=False)
 
 
 class Description(Base):
@@ -60,7 +60,7 @@ class Description(Base):
     topic_id = Column(Integer, ForeignKey('topics.id'), nullable=False, primary_key=True)
     topic = relationship(Topic, backref=backref('descriptions', lazy=True))
     language = Column(String(5), nullable=False, primary_key=True)
-    value = Column(Text, nullable=False, primary_key=True)
+    value = Column(Text, nullable=False)
 
 
 class Alias(Base):
@@ -69,7 +69,7 @@ class Alias(Base):
     topic_id = Column(Integer, ForeignKey('topics.id'), nullable=False, primary_key=True)
     topic = relationship(Topic, backref=backref('aliases', lazy=True))
     language = Column(String(5), nullable=False, primary_key=True)
-    value = Column(Text, nullable=False, primary_key=True)
+    value = Column(String(512), nullable=False, primary_key=True)
 
 
 class Type(Base):
@@ -87,7 +87,7 @@ class Key(Base):
 
     topic_id = Column(Integer, ForeignKey('topics.id'), nullable=False, primary_key=True)
     topic = relationship(Topic, backref=backref('keys', lazy=True))
-    key = Column(Text, nullable=False, primary_key=True)
+    key = Column(String(512), nullable=False, primary_key=True)
 
 
 @lru_cache(maxsize=1024)

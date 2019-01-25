@@ -1,6 +1,7 @@
 import gzip
 import logging
 import re
+import sys
 
 import plac
 from rdflib import URIRef
@@ -49,10 +50,13 @@ def load(
     db = sessionmaker(bind=engine)()
     Base.metadata.create_all(engine)
 
-    def add_to_language_column(table, s, label):
+    def add_to_language_column(table, s, label, max_size):
         s_topic = get_topic_from_url(db, s, True)
         if s_topic is None:
             logger.warning('Not able to get mid for label subject {}'.format(s))
+            return
+        if len(label) >= max_size:
+            logger.error('Not able to add too long label: {}'.format(label))
             return
         try:
             db.add(table(topic_id=s_topic.id, language=label.language, value=label.value))
@@ -86,6 +90,10 @@ def load(
         if s_topic is None:
             logger.warning('Not able to get mid for key {}'.format(s))
             return
+        key = decode_key(key)
+        if len(key) >= 512:
+            logger.error('Not able to add too long key: {}'.format(key))
+            return
         try:
             db.add(Key(topic_id=s_topic.id, key=decode_key(key)))
             db.commit()
@@ -111,11 +119,11 @@ def load(
         def triple(self, s, p, o):
             try:
                 if p == type_object_name:
-                    add_to_language_column(Label, s, o)
+                    add_to_language_column(Label, s, o, 512)
                 elif p == common_topic_description:
-                    add_to_language_column(Description, s, o)
+                    add_to_language_column(Description, s, o, sys.maxsize)
                 elif p == common_topic_alias:
-                    add_to_language_column(Alias, s, o)
+                    add_to_language_column(Alias, s, o, 512)
                 elif p == type_object_type:
                     add_type(s, o, False)
                 elif p == common_topic_notable_types:
@@ -123,8 +131,8 @@ def load(
                 elif p == type_object_key:
                     add_key(s, o.value)
                 self.i += 1
-                if self.i > 1000000:
-                    exit(0)
+                if self.i % 1000000:
+                    logger.info(self.i)
             except ValueError:
                 pass
 
