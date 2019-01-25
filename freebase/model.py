@@ -51,7 +51,7 @@ class Label(Base):
     topic_id = Column(Integer, ForeignKey('topics.id'), nullable=False, primary_key=True)
     topic = relationship(Topic, backref=backref('labels', lazy=True))
     language = Column(String(5), nullable=False, primary_key=True)
-    value = Column(String(512), nullable=False)
+    value = Column(String(255), nullable=False)
 
 
 class Description(Base):
@@ -69,7 +69,7 @@ class Alias(Base):
     topic_id = Column(Integer, ForeignKey('topics.id'), nullable=False, primary_key=True)
     topic = relationship(Topic, backref=backref('aliases', lazy=True))
     language = Column(String(5), nullable=False, primary_key=True)
-    value = Column(String(512), nullable=False, primary_key=True)
+    value = Column(String(255), nullable=False, primary_key=True)
 
 
 class Type(Base):
@@ -87,7 +87,7 @@ class Key(Base):
 
     topic_id = Column(Integer, ForeignKey('topics.id'), nullable=False, primary_key=True)
     topic = relationship(Topic, backref=backref('keys', lazy=True))
-    key = Column(String(512), nullable=False, primary_key=True)
+    key = Column(String(255), nullable=False, primary_key=True)
 
 
 @lru_cache(maxsize=1024)
