@@ -3,7 +3,6 @@ import logging
 import re
 import sys
 
-import plac
 from rdflib import URIRef
 from rdflib.plugins.parsers.ntriples import NTriplesParser
 from sqlalchemy import create_engine
@@ -144,4 +143,10 @@ def load(
 
 
 if __name__ == '__main__':
-    plac.call(load)
+    n = len(sys.argv[1:])
+    if n < 2:
+        sys.exit('usage: python %s dump_file type.object.key_file' % sys.argv[0])
+    elif n == 2:
+        load(sys.argv[1], sys.argv[2])
+    else:
+        sys.exit('Unrecognized arguments: %s' % ' '.join(sys.argv[3:]))
