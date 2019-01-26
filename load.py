@@ -48,7 +48,15 @@ def load(
     engine = create_engine(get_db_url())
     db = sessionmaker(bind=engine)()
     Base.metadata.create_all(engine)
-
+    
+    def db_add(value):
+        try:
+            db.add(value)
+            db.commit()
+        except:
+            db.rollback()
+            raise
+ 
     def add_to_language_column(table, s, label, max_size):
         s_topic = get_topic_from_url(db, s, True)
         if s_topic is None:
@@ -58,10 +66,9 @@ def load(
             logger.error('Not able to add too long label: {}'.format(label))
             return
         try:
-            db.add(table(topic_id=s_topic.id, language=label.language, value=label.value))
-            db.commit()
+            db_add(table(topic_id=s_topic.id, language=label.language, value=label.value))
         except IntegrityError:
-            db.rollback()  # We do not care about duplicates
+            pass  # We do not care about duplicates
 
     def add_type(s, o, notable):
         s_topic = get_topic_from_url(db, s, True)
@@ -73,10 +80,8 @@ def load(
             logger.warning('Not able to get mid for type object {}'.format(o))
             return
         try:
-            db.add(Type(topic_id=s_topic.id, type_id=o_topic.id, notable=notable))
-            db.commit()
+            db_add(Type(topic_id=s_topic.id, type_id=o_topic.id, notable=notable))
         except IntegrityError:
-            db.rollback()
             if notable:
                 # We add notability
                 db.query(Type).filter_by(topic_id=s_topic.id, type_id=o_topic.id).update({'notable': notable})
@@ -94,10 +99,9 @@ def load(
             logger.error('Not able to add too long key: {}'.format(key))
             return
         try:
-            db.add(Key(topic_id=s_topic.id, key=decode_key(key)))
-            db.commit()
+            db_add(Key(topic_id=s_topic.id, key=decode_key(key)))
         except IntegrityError:
-            db.rollback()
+            pass
 
     class TextIdSink:
         def triple(self, s, p, o):
@@ -105,10 +109,9 @@ def load(
                 s = s.replace('http://rdf.freebase.com/ns', '').replace('.', '/')
                 o = o.replace('http://rdf.freebase.com/ns', '').replace('.', '/')
                 try:
-                    db.add(Topic(mid=s, textid=o))
-                    db.commit()
+                    db_add(Topic(mid=s, textid=o))
                 except IntegrityError:
-                    db.rollback()
+                    pass
             else:
                 logger.info('Unexpected triple: {} {} {}'.format(s, p, o))
 
