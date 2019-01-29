@@ -49,9 +49,12 @@ def load(
     db = sessionmaker(bind=engine)()
     Base.metadata.create_all(engine)
     
-    def db_add(value):
+    def db_add(table, values):
         try:
-            db.add(value)
+            db.execute(
+                table.__table__.insert(),
+                values
+            )
             db.commit()
         except:
             db.rollback()
@@ -66,7 +69,7 @@ def load(
             logger.error('Not able to add too long label: {}'.format(label))
             return
         try:
-            db_add(table(topic_id=s_topic.id, language=label.language, value=label.value))
+            db_add(table, {'topic_id': s_topic.id, 'language': label.language, 'value': label.value})
         except IntegrityError:
             pass  # We do not care about duplicates
 
@@ -80,7 +83,7 @@ def load(
             logger.warning('Not able to get mid for type object {}'.format(o))
             return
         try:
-            db_add(Type(topic_id=s_topic.id, type_id=o_topic.id, notable=notable))
+            db_add(Type, {'topic_id': s_topic.id, 'type_id': o_topic.id, 'notable': notable})
         except IntegrityError:
             if notable:
                 # We add notability
@@ -99,7 +102,7 @@ def load(
             logger.error('Not able to add too long key: {}'.format(key))
             return
         try:
-            db_add(Key(topic_id=s_topic.id, key=decode_key(key)))
+            db_add(Key, {'topic_id': s_topic.id, 'key': decode_key(key)})
         except IntegrityError:
             pass
 
@@ -109,7 +112,7 @@ def load(
                 s = s.replace('http://rdf.freebase.com/ns', '').replace('.', '/')
                 o = o.replace('http://rdf.freebase.com/ns', '').replace('.', '/')
                 try:
-                    db_add(Topic(mid=s, textid=o))
+                    db_add(Topic, {'mid': s, 'textid': o})
                 except IntegrityError:
                     pass
             else:

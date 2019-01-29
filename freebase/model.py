@@ -109,7 +109,10 @@ def get_topic_from_url(db: Session, url: str, insert_if_not_exists=False):
         for topic in db.query(Topic).filter_by(textid=textid):
             return topic
         if insert_if_not_exists:
-            db.add(Topic(textid=textid))
+            db.execute(
+                Topic.__table__.insert(),
+                {'textid': textid}
+            )
             db.commit()
             return get_topic_from_url(db, url)
         else:
