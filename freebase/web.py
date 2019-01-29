@@ -3,11 +3,12 @@ import json
 from flask import Flask, render_template, request, abort, redirect
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 
 from freebase.model import Topic, get_db_url
 
 app = Flask(__name__)
-engine = create_engine(get_db_url())
+engine = create_engine(get_db_url(), poolclass=NullPool)
 Session = sessionmaker(bind=engine)
 
 
