@@ -16,11 +16,6 @@ def main():
     return render_template('main.html')
 
 
-@app.route('/freebase/<path:path>')
-def base(path):
-    return redirect(path)
-
-
 @app.route('/<path:path>')
 def get_entity(path):
     path = '/' + path
