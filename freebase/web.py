@@ -1,5 +1,4 @@
 import json
-
 from flask import Flask, render_template, request, abort, redirect
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -22,35 +21,37 @@ def base(path):
     return redirect(path)
 
 
-@app.route('/m/<mid>')
-def get_mmid(mid):
-    return get_topic(mid='/m/{}'.format(mid))
+@app.route('/<path:path>')
+def get_entity(path):
+    path = '/' + path
+    db = Session()
+    try:
+        topic = None
+        if path.startswith('/m/') or path.startswith('/g/'):
+            topic = db.query(Topic).filter_by(mid=path).first()
+        if topic is None:
+            topic = db.query(Topic).filter_by(textid=path).first()
+        if topic is None:
+            topic = db.query(Topic).join(Topic.keys).filter_by(key=path).first()
+        if topic is None:
+            abort(404)
 
+        if topic.mid is not None and path != topic.mid:
+            return redirect(topic.mid, code=303)  # We prefer the MID
 
-@app.route('/g/<mid>')
-def get_gmid(mid):
-    return get_topic(mid='/g/{}'.format(mid))
-
-
-@app.route('/<group>/<type>')
-def get_2_step_textid(group, type):
-    return get_topic(textid='/{}/{}'.format(group, type))
-
-
-@app.route('/<group>/<type>/<property>')
-def get_3_step_textid(group, type, property):
-    return get_topic(textid='/{}/{}/{}'.format(group, type, property))
-
-
-@app.route('/<space>/<group>/<type>/<property>')
-def get_4_step_textid(space, group, type, property):
-    return get_topic(textid='/{}/{}/{}/{}'.format(space, group, type, property))
+        mimetype = request.accept_mimetypes.best_match(['text/html', 'application/ld+json', 'application/json'])
+        if mimetype == 'application/json' or mimetype == 'application/ld+json':
+            return app.response_class(json.dumps(topic.jsonld), mimetype=mimetype)
+        else:
+            return render_template('topic_display.html', topic=to_full_dict(topic))
+    finally:
+        db.close()
 
 
 def to_simple_dict(topic):
     return {
         'id': topic.textid if topic.textid else topic.mid,
-        'url': '/freebase{}'.format(topic.textid if topic.textid else topic.mid),
+        'url': '/freebase{}'.format(topic.mid if topic.mid else topic.textid),
         'label': content_negotiation(topic.labels),
         'description': content_negotiation(topic.descriptions)
     }
