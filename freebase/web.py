@@ -37,7 +37,7 @@ def get_entity(path):
             abort(404)
 
         if topic.mid is not None and path != topic.mid:
-            return redirect(topic.mid, code=303)  # We prefer the MID
+            return redirect('/freebase{}'.format(topic.mid), code=303)  # We prefer the MID
 
         mimetype = request.accept_mimetypes.best_match(['text/html', 'application/ld+json', 'application/json'])
         if mimetype == 'application/json' or mimetype == 'application/ld+json':
