@@ -6,42 +6,15 @@
     <link href="https://tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css"
           rel="stylesheet">
     <style>
-        body {
-            padding-top: 1.5rem;
-            padding-bottom: 1.5rem;
-        }
-
-        .header,
-        .content,
-        .footer {
-            padding-right: 1rem;
-            padding-left: 1rem;
-        }
-
-        .header {
-            padding-bottom: 1rem;
-            border-bottom: .05rem solid #e5e5e5;
-        }
-
-        .footer {
-            padding-top: 1.5rem;
-            color: #777;
-            border-top: .05rem solid #e5e5e5;
-        }
-
         @media (min-width: 48rem) {
             .container {
                 max-width: 46rem;
             }
         }
 
-        .jumbotron {
-            text-align: center;
-            border-bottom: .05rem solid #e5e5e5;
-        }
-
-        .content {
-            margin: 3rem 0;
+        main {
+            margin-top: 1rem;
+            margin-bottom: 1rem;
         }
     </style>
     {% block head %}
@@ -49,22 +22,24 @@
 </head>
 <body>
 <div class="container">
-    <header class="header clearfix">
-        <nav>
-            <ul class="nav nav-pills float-right">
-                {% block navLinks %}
-                <li class="nav-item">
-                    <a class="nav-link" href="/freebase/">Home</a>
-                </li>
-                {% endblock %}
-            </ul>
+    <header>
+        <nav class="navbar navbar-expand navbar-light bg-light">
+            <a href="/freebase/" class="navbar-brand">Freebase Browser</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav">
+                    {% block navLinks %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/freebase/">Home</a>
+                    </li>
+                    {% endblock %}
+                </ul>
+            </div>
         </nav>
-        <h3 class="text-muted">Freebase Browser</h3>
     </header>
     <main role="main">
         {% block main %}{% endblock %}
     </main>
-    <footer class="footer">
+    <footer>
         <p>
             The data are extracted from <a href="https://developers.google.com/freebase/">the latest Freebase dumps</a>.
             They are available under the <a rel="license" href="http://creativecommons.org/licenses/by/2.5/">Creative
