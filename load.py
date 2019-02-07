@@ -45,7 +45,7 @@ def load(
         dump_file: 'url of the Freebase RDF dump',
         mid_textid_file: 'url of the part of the Freebase RDF dump containing type.object.id relations'
 ):
-    engine = create_engine(get_db_url())
+    engine = create_engine(get_db_url(), pool_recycle=3600)
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     db = Session()
