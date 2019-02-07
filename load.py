@@ -50,20 +50,13 @@ def load(
     Session = sessionmaker(bind=engine)
     db = Session()
 
-    def db_add(table, values, rec=True):
+    def db_add(table, values):
         try:
             db.execute(
                 table.__table__.insert(),
                 values
             )
             db.commit()
-        except OperationalError:
-            if rec:
-                global db
-                db = Session()
-                db_add(table, values, False)
-            else:
-                raise
         except Exception:
             db.rollback()
             raise
