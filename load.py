@@ -6,7 +6,7 @@ import sys
 from rdflib import URIRef
 from rdflib.plugins.parsers.ntriples import NTriplesParser
 from sqlalchemy import create_engine
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import sessionmaker
 
 from freebase.model import *
@@ -46,20 +46,28 @@ def load(
         mid_textid_file: 'url of the part of the Freebase RDF dump containing type.object.id relations'
 ):
     engine = create_engine(get_db_url())
-    db = sessionmaker(bind=engine)()
     Base.metadata.create_all(engine)
-    
-    def db_add(table, values):
+    Session = sessionmaker(bind=engine)
+    db = Session()
+
+    def db_add(table, values, rec=True):
+        global db
         try:
             db.execute(
                 table.__table__.insert(),
                 values
             )
             db.commit()
-        except:
+        except OperationalError:
+            if rec:
+                db = Session()
+                db_add(table, values, False)
+            else:
+                raise
+        except Exception:
             db.rollback()
             raise
- 
+
     def add_to_language_column(table, s, label, max_size):
         s_topic = get_topic_from_url(db, s, True)
         if s_topic is None:
@@ -122,6 +130,12 @@ def load(
         i = 0
 
         def triple(self, s, p, o):
+            self.i += 1
+            if self.i % 1000000 == 0:
+                print(self.i)
+                with open('progress.txt', 'wt') as fp:
+                    fp.write(str(self.i))
+
             try:
                 if p == type_object_name:
                     add_to_language_column(Label, s, o, MAX_VARCHAR_SIZE)
@@ -135,9 +149,6 @@ def load(
                     add_type(s, o, True)
                 elif p == type_object_key:
                     add_key(s, o.value)
-                self.i += 1
-                if self.i % 1000000:
-                    logger.info(self.i)
             except ValueError:
                 pass
 
@@ -145,6 +156,13 @@ def load(
         NTriplesParser(sink=TextIdSink()).parse(fp)
 
     with gzip.open(dump_file) as fp:
+        if os.path.isfile('progress.txt'):
+            with open('progress.txt', 'rt') as fpc:
+                cursor = int(fpc.read())
+            for _ in fp:
+                cursor -= 1
+                if cursor == 0:
+                    break
         NTriplesParser(sink=TripleSink()).parse(fp)
 
 
