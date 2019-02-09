@@ -152,10 +152,8 @@ def load(
         if os.path.isfile('progress.txt'):
             with open('progress.txt', 'rt') as fpc:
                 cursor = int(fpc.read())
-            for _ in fp:
-                cursor -= 1
-                if cursor == 0:
-                    break
+            for _ in range(cursor):
+                fp.readline()
         NTriplesParser(sink=TripleSink()).parse(fp)
 
 
