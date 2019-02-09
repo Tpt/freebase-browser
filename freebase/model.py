@@ -23,7 +23,7 @@ Base = declarative_base()
 class Topic(Base):
     __tablename__ = 'topics'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     mid = Column(String(13), unique=True, nullable=True)
     textid = Column(String(MAX_VARCHAR_SIZE), unique=True, nullable=True)
 
@@ -93,29 +93,21 @@ class Key(Base):
 
 
 @lru_cache(maxsize=1024)
-def get_topic_from_url(db: Session, url: str, insert_if_not_exists=False):
-    if url.startswith('http://rdf.freebase.com/ns/m.') or url.startswith('http://rdf.freebase.com/ns/g.'):
-        mid = url.replace('http://rdf.freebase.com/ns', '').replace('.', '/')
-        for topic in db.query(Topic).filter_by(mid=mid):
-            return topic
-        if insert_if_not_exists:
-            db.add(Topic(mid=mid))
-            db.commit()
-            return get_topic_from_url(db, url)
-        else:
-            return None
-    elif url.startswith('http://rdf.freebase.com/ns'):
-        textid = url.replace('http://rdf.freebase.com/ns', '').replace('.', '/')
-        for topic in db.query(Topic).filter_by(textid=textid):
-            return topic
-        if insert_if_not_exists:
-            db.execute(
-                Topic.__table__.insert(),
-                {'textid': textid}
-            )
-            db.commit()
-            return get_topic_from_url(db, url)
-        else:
-            return None
+def get_topic_from_url(db: Session, url: str, insert_if_not_exists: bool = False):
+    id = url.replace('http://rdf.freebase.com/ns', '').replace('.', '/')
+    if id.startswith('/m/') or id.startswith('/g/'):
+        return _get_topic_from_id(db, insert_if_not_exists, mid=id)
     else:
-        raise ValueError('Illegal Freebase URL: {}'.format(url))
+        return _get_topic_from_id(db, insert_if_not_exists, textid=id)
+
+
+def _get_topic_from_id(db: Session, insert_if_not_exists: bool, **keys):
+    for topic in db.query(Topic).filter_by(**keys):
+        return topic
+    if insert_if_not_exists:
+        topic = Topic(**keys)
+        db.add(topic)
+        db.commit()
+        return topic
+    else:
+        return None
