@@ -104,6 +104,9 @@ def get_topic_from_url(db: Session, url: str, insert_if_not_exists: bool = False
 def _get_topic_from_id(db: Session, insert_if_not_exists: bool, **keys):
     for topic in db.query(Topic).filter_by(**keys):
         return topic
+    for _, value in keys:
+        if len(value) >= MAX_VARCHAR_SIZE / 4:
+            return None
     if insert_if_not_exists:
         topic = Topic(**keys)
         db.add(topic)
