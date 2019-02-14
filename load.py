@@ -2,12 +2,13 @@ import gzip
 import logging
 import re
 import sys
+from functools import lru_cache
+from typing import Optional
 
 from rdflib import URIRef
 from rdflib.plugins.parsers.ntriples import NTriplesParser
 from sqlalchemy import create_engine
-from sqlalchemy.exc import IntegrityError, OperationalError
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import IntegrityError
 
 from freebase.model import *
 
@@ -41,61 +42,87 @@ def decode_key(key: str):
     return _decode_key_regex.sub(lambda k: chr(int(k.group(1), 16)), key)
 
 
+@lru_cache(maxsize=128)
+def insert_query(table):
+    return table.__table__.insert()
+
+
 def load(
         dump_file: 'url of the Freebase RDF dump',
         mid_textid_file: 'url of the part of the Freebase RDF dump containing type.object.id relations'
 ):
     engine = create_engine(get_db_url(), pool_recycle=3600)
     Base.metadata.create_all(engine)
-    Session = sessionmaker(bind=engine)
-    db = Session()
+
+    @lru_cache(maxsize=4096)
+    def get_topic_id_from_url(url: str) -> Optional[int]:
+        input_id = url.replace('http://rdf.freebase.com/ns', '').replace('.', '/')
+        db = engine.connect()
+        try:
+            if input_id.startswith('/m/') or input_id.startswith('/g/'):
+                for topic in db.execute(Topic.__table__.select(Topic.mid == input_id)):
+                    return topic[0]
+                return db.execute(insert_query(Topic), mid=input_id).inserted_primary_key[0]
+            else:
+                if len(input_id) > MAX_VARCHAR_SIZE:
+                    return None
+                for topic in db.execute(Topic.__table__.select(Topic.textid == input_id)):
+                    return topic[0]
+                return db.execute(insert_query(Topic), textid=input_id).inserted_primary_key[0]
+        finally:
+            db.close()
 
     def db_add(table, values):
+        db = engine.connect()
         try:
             db.execute(
-                table.__table__.insert(),
+                insert_query(table),
                 values
             )
-            db.commit()
-        except Exception:
-            db.rollback()
-            raise
+        finally:
+            db.close()
 
     def add_to_language_column(table, s, label, max_size):
-        s_topic = get_topic_from_url(db, s, True)
-        if s_topic is None:
+        s_topic_id = get_topic_id_from_url(s)
+        if s_topic_id is None:
             logger.warning('Not able to get mid for label subject {}'.format(s))
             return
         if len(label) >= max_size:
             logger.error('Not able to add too long label: {}'.format(label))
             return
         try:
-            db_add(table, {'topic_id': s_topic.id, 'language': label.language, 'value': label.value})
+            db_add(table, {'topic_id': s_topic_id, 'language': label.language, 'value': label.value})
         except IntegrityError:
             pass  # We do not care about duplicates
 
     def add_type(s, o, notable):
-        s_topic = get_topic_from_url(db, s, True)
-        if s_topic is None:
+        s_topic_id = get_topic_id_from_url(s)
+        if s_topic_id is None:
             logger.warning('Not able to get mid for type subject {}'.format(s))
             return
-        o_topic = get_topic_from_url(db, o, True)
-        if o_topic is None:
+        o_topic_id = get_topic_id_from_url(o)
+        if o_topic_id is None:
             logger.warning('Not able to get mid for type object {}'.format(o))
             return
         try:
-            db_add(Type, {'topic_id': s_topic.id, 'type_id': o_topic.id, 'notable': notable})
+            db_add(Type, {'topic_id': s_topic_id, 'type_id': o_topic_id, 'notable': notable})
         except IntegrityError:
             if notable:
                 # We add notability
-                db.query(Type).filter_by(topic_id=s_topic.id, type_id=o_topic.id).update({'notable': notable})
-                db.commit()
+                db = engine.connect()
+                try:
+                    db.execute(
+                        Type.__table__.update()
+                            .where(Type.topic_id == s_topic_id, Type.type_id == o_topic_id)
+                            .values(notable=notable))
+                finally:
+                    db.close()
 
     def add_key(s, key):
         if not is_interesting_key(key):
             return False
-        s_topic = get_topic_from_url(db, s, True)
-        if s_topic is None:
+        s_topic_id = get_topic_id_from_url(s)
+        if s_topic_id is None:
             logger.warning('Not able to get mid for key {}'.format(s))
             return
         key = decode_key(key)
@@ -103,7 +130,7 @@ def load(
             logger.error('Not able to add too long key: {}'.format(key))
             return
         try:
-            db_add(Key, {'topic_id': s_topic.id, 'key': decode_key(key)})
+            db_add(Key, {'topic_id': s_topic_id, 'key': decode_key(key)})
         except IntegrityError:
             pass
 
@@ -126,8 +153,8 @@ def load(
             self.i += 1
             if self.i % 1000000 == 0:
                 print(self.i)
-                with open('progress.txt', 'wt') as fp:
-                    fp.write(str(self.i))
+                with open('progress.txt', 'wt') as pfp:
+                    pfp.write(str(self.i))
 
             try:
                 if p == type_object_name:
@@ -151,7 +178,8 @@ def load(
     with gzip.open(dump_file) as fp:
         if os.path.isfile('progress.txt'):
             with open('progress.txt', 'rt') as fpc:
-                cursor = int(fpc.read())
+                cursor = int(fpc.read().strip())
+            logger.info('Skipping the first {} lines'.format(cursor))
             for _ in range(cursor):
                 fp.readline()
         NTriplesParser(sink=TripleSink()).parse(fp)

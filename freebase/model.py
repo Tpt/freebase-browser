@@ -1,9 +1,8 @@
 import os
-from functools import lru_cache
 
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, Boolean
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Session, relationship, backref
+from sqlalchemy.orm import relationship, backref
 
 MAX_VARCHAR_SIZE = 191
 
@@ -90,27 +89,3 @@ class Key(Base):
     topic_id = Column(Integer, ForeignKey('topics.id'), nullable=False, primary_key=True)
     topic = relationship(Topic, backref=backref('keys', lazy=True))
     key = Column(String(MAX_VARCHAR_SIZE), nullable=False, primary_key=True)
-
-
-@lru_cache(maxsize=1024)
-def get_topic_from_url(db: Session, url: str, insert_if_not_exists: bool = False):
-    id = url.replace('http://rdf.freebase.com/ns', '').replace('.', '/')
-    if id.startswith('/m/') or id.startswith('/g/'):
-        return _get_topic_from_id(db, insert_if_not_exists, mid=id)
-    else:
-        return _get_topic_from_id(db, insert_if_not_exists, textid=id)
-
-
-def _get_topic_from_id(db: Session, insert_if_not_exists: bool, **keys):
-    for topic in db.query(Topic).filter_by(**keys):
-        return topic
-    for _, value in keys:
-        if len(value) >= MAX_VARCHAR_SIZE / 4:
-            return None
-    if insert_if_not_exists:
-        topic = Topic(**keys)
-        db.add(topic)
-        db.commit()
-        return topic
-    else:
-        return None
