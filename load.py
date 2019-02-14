@@ -8,7 +8,7 @@ from typing import Optional
 from rdflib import URIRef
 from rdflib.plugins.parsers.ntriples import NTriplesParser
 from sqlalchemy import create_engine
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, OperationalError
 
 from freebase.model import *
 
@@ -54,33 +54,43 @@ def load(
     engine = create_engine(get_db_url(), pool_recycle=3600)
     Base.metadata.create_all(engine)
 
-    @lru_cache(maxsize=4096)
-    def get_topic_id_from_url(url: str) -> Optional[int]:
-        input_id = url.replace('http://rdf.freebase.com/ns', '').replace('.', '/')
+    def execute_select(statement, **args):
         db = engine.connect()
         try:
-            if input_id.startswith('/m/') or input_id.startswith('/g/'):
-                for topic in db.execute(Topic.__table__.select(Topic.mid == input_id)):
-                    return topic[0]
-                return db.execute(insert_query(Topic), mid=input_id).inserted_primary_key[0]
-            else:
-                if len(input_id) > MAX_VARCHAR_SIZE:
-                    return None
-                for topic in db.execute(Topic.__table__.select(Topic.textid == input_id)):
-                    return topic[0]
-                return db.execute(insert_query(Topic), textid=input_id).inserted_primary_key[0]
+            for row in db.execute(statement, **args):
+                yield row
+        except OperationalError:
+            db.close()
+            db = engine.connect()
+            for row in db.execute(statement, **args):
+                yield row
         finally:
             db.close()
 
-    def db_add(table, values):
+    def execute_edit(statement, **args):
         db = engine.connect()
         try:
-            db.execute(
-                insert_query(table),
-                values
-            )
+            return db.execute(statement, **args)
+        except OperationalError:
+            db.close()
+            db = engine.connect()
+            return db.execute(statement, **args)
         finally:
             db.close()
+
+    @lru_cache(maxsize=4096)
+    def get_topic_id_from_url(url: str) -> Optional[int]:
+        input_id = url.replace('http://rdf.freebase.com/ns', '').replace('.', '/')
+        if input_id.startswith('/m/') or input_id.startswith('/g/'):
+            for topic in execute_select(Topic.__table__.select(Topic.mid == input_id)):
+                return topic[0]
+            return execute_edit(insert_query(Topic), mid=input_id).inserted_primary_key[0]
+        else:
+            if len(input_id) > MAX_VARCHAR_SIZE:
+                return None
+            for topic in execute_select(Topic.__table__.select(Topic.textid == input_id)):
+                return topic[0]
+            return execute_edit(insert_query(Topic), textid=input_id).inserted_primary_key[0]
 
     def add_to_language_column(table, s, label, max_size):
         s_topic_id = get_topic_id_from_url(s)
@@ -91,7 +101,7 @@ def load(
             logger.error('Not able to add too long label: {}'.format(label))
             return
         try:
-            db_add(table, {'topic_id': s_topic_id, 'language': label.language, 'value': label.value})
+            execute_edit(insert_query(table), topic_id=s_topic_id, language=label.language, value=label.value)
         except IntegrityError:
             pass  # We do not care about duplicates
 
@@ -105,18 +115,14 @@ def load(
             logger.warning('Not able to get mid for type object {}'.format(o))
             return
         try:
-            db_add(Type, {'topic_id': s_topic_id, 'type_id': o_topic_id, 'notable': notable})
+            execute_edit(insert_query(Type), topic_id=s_topic_id, type_id=o_topic_id, notable=notable)
         except IntegrityError:
             if notable:
                 # We add notability
-                db = engine.connect()
-                try:
-                    db.execute(
-                        Type.__table__.update()
-                            .where(Type.topic_id == s_topic_id, Type.type_id == o_topic_id)
-                            .values(notable=notable))
-                finally:
-                    db.close()
+                execute_edit(Type.__table__.update()
+                             .where(Type.topic_id == s_topic_id)
+                             .where(Type.type_id == o_topic_id)
+                             .values(notable=notable))
 
     def add_key(s, key):
         if not is_interesting_key(key):
@@ -130,7 +136,7 @@ def load(
             logger.error('Not able to add too long key: {}'.format(key))
             return
         try:
-            db_add(Key, {'topic_id': s_topic_id, 'key': decode_key(key)})
+            execute_edit(insert_query(Key), topic_id=s_topic_id, key=decode_key(key))
         except IntegrityError:
             pass
 
@@ -140,7 +146,7 @@ def load(
                 s = s.replace('http://rdf.freebase.com/ns', '').replace('.', '/')
                 o = o.replace('http://rdf.freebase.com/ns', '').replace('.', '/')
                 try:
-                    db_add(Topic, {'mid': s, 'textid': o})
+                    execute_edit(insert_query(Topic), mid=s, textid=o)
                 except IntegrityError:
                     pass
             else:
