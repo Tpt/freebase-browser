@@ -69,6 +69,13 @@
                     </dd>
                 </dl>
                 {% endif %}
+                <a href="https://web.archive.org/*/www.freebase.com{{ topic.id }}" class="card-link">Archive.org</a>
+                {% if topic.google_url %}
+                <a href="{{ topic.google_url }}" class="card-link">Google</a>
+                {% endif %}
+                {% if topic.wikidata_uri %}
+                <a href="{{ topic.wikidata_uri }}" class="card-link">Wikidata</a>
+                {% endif %}
             </div>
         </div>
     </div>

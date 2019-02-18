@@ -1,10 +1,14 @@
 import json
+from functools import lru_cache
+from urllib.parse import quote_plus
+
+import requests
 from flask import Flask, render_template, request, abort, redirect
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
 
-from freebase.model import Topic, get_db_url
+from freebase.model import Topic, get_db_url, Label
 
 app = Flask(__name__)
 engine = create_engine(get_db_url(), poolclass=NullPool)
@@ -14,6 +18,15 @@ Session = sessionmaker(bind=engine)
 @app.route('/')
 def main():
     return render_template('main.html')
+
+
+@app.route('/google/<path:path>')
+def google(path):
+    path = '/' + path
+    url = google_url(Topic(mid=path))
+    if url is None:
+        abort(404)
+    return redirect(url, code=303)
 
 
 @app.route('/<path:path>')
@@ -59,6 +72,8 @@ def to_full_dict(topic):
     desc['other_types'] = [to_simple_dict(type.type) for type in topic.types if not type.notable]
     desc['fkeys'] = [key.key for key in topic.keys]
     desc['jsonld'] = json.dumps(topic.jsonld)
+    desc['google_url'] = google_url(topic)
+    desc['wikidata_uri'] = wikidata_uri(topic)
     return desc
 
 
@@ -85,4 +100,45 @@ def content_negotiation(labels):
     for label in labels:
         if label.language == best_language:
             return label
+    return None
+
+
+def google_url(topic: Topic):
+    label = content_negotiation(topic.labels) or wikidata_label(topic)
+    if label is None or topic.mid is None:
+        return None
+    return 'https://www.google.com/search?kgmid={}&q={}'.format(topic.mid, quote_plus(label.value))
+
+
+@lru_cache(maxsize=4096)
+def wikidata_uri(topic: Topic):
+    if topic.mid is None:
+        return None
+    query = 'SELECT DISTINCT ?item WHERE { ?item wdt:P646|wdt:P2671 "%s" }' % topic.mid
+    results = requests.post('https://query.wikidata.org/sparql', data=query, headers={
+        'content-type': 'application/sparql-query',
+        'accept': 'application/json',
+        'user-agent': 'FreebaseBrowser/0.0 (https://tools.wmflabs.org/freebase/)'
+    }).json()
+    items = []
+    for result in results['results']['bindings']:
+        items.append(result['item']['value'])
+    if len(items) == 1:
+        return items[0]
+    else:
+        return None
+
+
+@lru_cache(maxsize=4096)
+def wikidata_label(topic: Topic):
+    if topic.mid is None:
+        return None
+    query = 'SELECT ?itemLabel WHERE { ?item wdt:P646|wdt:P2671 "%s" . SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } }' % topic.mid
+    results = requests.post('https://query.wikidata.org/sparql', data=query, headers={
+        'content-type': 'application/sparql-query',
+        'accept': 'application/json',
+        'user-agent': 'FreebaseBrowser/0.0 (https://tools.wmflabs.org/freebase/)'
+    }).json()
+    for result in results['results']['bindings']:
+        return Label(value=result['itemLabel']['value'], language=result['itemLabel']['value'])
     return None
