@@ -153,14 +153,15 @@ def load(
                 logger.info('Unexpected triple: {} {} {}'.format(s, p, o))
 
     class TripleSink:
-        i = 0
+        def __init__(self, start_cursor=0):
+            self.cursor = start_cursor
 
         def triple(self, s, p, o):
-            self.i += 1
-            if self.i % 1000000 == 0:
-                print(self.i)
+            self.cursor += 1
+            if self.cursor % 1000000 == 0:
+                print(self.cursor)
                 with open('progress.txt', 'wt') as pfp:
-                    pfp.write(str(self.i))
+                    pfp.write(str(self.cursor))
 
             try:
                 if p == type_object_name:
@@ -182,13 +183,14 @@ def load(
         NTriplesParser(sink=TextIdSink()).parse(fp)
 
     with gzip.open(dump_file) as fp:
+        cursor = 0
         if os.path.isfile('progress.txt'):
             with open('progress.txt', 'rt') as fpc:
                 cursor = int(fpc.read().strip())
             logger.info('Skipping the first {} lines'.format(cursor))
-            for _ in range(cursor):
-                fp.readline()
-        NTriplesParser(sink=TripleSink()).parse(fp)
+        for _ in range(cursor):
+            fp.readline()
+        NTriplesParser(sink=TripleSink(cursor)).parse(fp)
 
 
 if __name__ == '__main__':
