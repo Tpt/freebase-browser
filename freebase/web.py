@@ -34,13 +34,12 @@ def get_entity(path):
     path = '/' + path
     db = Session()
     try:
-        topic = None
         if path.startswith('/m/') or path.startswith('/g/'):
             topic = db.query(Topic).filter_by(mid=path).first()
-        if topic is None:
+        else:
             topic = db.query(Topic).filter_by(textid=path).first()
-        if topic is None:
-            topic = db.query(Topic).join(Topic.keys).filter_by(key=path).first()
+            if topic is None:
+                topic = db.query(Topic).join(Topic.keys).filter_by(key=path).first()
         if topic is None:
             abort(404)
 
