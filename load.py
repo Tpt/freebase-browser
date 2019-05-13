@@ -90,7 +90,11 @@ def load(
                 return None
             for topic in execute_select(Topic.__table__.select(Topic.textid == input_id)):
                 return topic[0]
-            return execute_edit(insert_query(Topic), textid=input_id).inserted_primary_key[0]
+            try:
+                return execute_edit(insert_query(Topic), textid=input_id).inserted_primary_key[0]
+            except IntegrityError as e:
+                logger.error(e)
+                return None
 
     def add_to_language_column(table, s, label, max_size):
         s_topic_id = get_topic_id_from_url(s)
