@@ -63,9 +63,11 @@
                 <dl>
                     <dt>Keys</dt>
                     <dd>
-                        {%- for key in topic.fkeys %}
-                        {{ key }}
-                        {%- endfor %}
+                        <ul>
+                            {%- for key in topic.fkeys %}
+                            <li>{{ key }}</li>
+                            {%- endfor %}
+                        </ul>
                     </dd>
                 </dl>
                 {% endif %}
