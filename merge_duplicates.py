@@ -1,4 +1,5 @@
 from sqlalchemy import create_engine
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import text
 
 from freebase.model import *
@@ -19,5 +20,8 @@ for (from_id, to_id, text_id) in rows:
         db.execute(text('UPDATE IGNORE `{}` SET topic_id = {} WHERE topic_id = {}'.format(table, to_id, from_id)))
         db.execute(text('DELETE FROM `{}` WHERE topic_id = {}'.format(table, from_id)))
     db.execute(text('DELETE FROM topics WHERE id = {}'.format(from_id)))
-    db.execute(text('UPDATE topics SET textid = "{}" WHERE id = {}'.format(text_id, to_id)))
+    try:
+        db.execute(text('UPDATE topics SET textid = "{}" WHERE id = {}'.format(text_id, to_id)))
+    except IntegrityError:
+        pass
 db.close()
