@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, Boolean
 from sqlalchemy.ext.declarative import declarative_base
@@ -8,9 +8,9 @@ MAX_VARCHAR_SIZE = 191
 
 
 def get_db_url():
-    path = os.path.join(os.path.dirname(__file__), '../database_url.txt')
-    if os.path.isfile(path):
-        with open(path, 'rt') as fp:
+    path = Path(__file__).parent.parent / 'database_url.txt'
+    if path.is_file():
+        with path.open('rt') as fp:
             return fp.read().strip()
     else:
         raise ValueError('You should create a database_url.txt file with the database url like sqlite:///test.db')
@@ -89,3 +89,23 @@ class Key(Base):
     topic_id = Column(Integer, ForeignKey('topics.id'), nullable=False, primary_key=True)
     topic = relationship(Topic, backref=backref('keys', lazy=True))
     key = Column(String(MAX_VARCHAR_SIZE), nullable=False, primary_key=True)
+
+
+class Property(Base):
+    __tablename__ = 'properties'
+
+    topic_id = Column(Integer, ForeignKey('topics.id'), nullable=False, primary_key=True)
+    topic = relationship(Topic, foreign_keys=topic_id, backref=backref('property', lazy=True))
+    schema_id = Column(Integer, ForeignKey('topics.id'))
+    schema = relationship(Topic, foreign_keys=schema_id)
+    expected_type_id = Column(Integer, ForeignKey('topics.id'))
+    expected_type = relationship(Topic, foreign_keys=expected_type_id)
+    unique = Column(Boolean)
+    master_id = Column(Integer, ForeignKey('topics.id'))
+    master = relationship(Topic, foreign_keys=master_id)
+    reverse_id = Column(Integer, ForeignKey('topics.id'))
+    reverse = relationship(Topic, foreign_keys=reverse_id)
+    unit_id = Column(Integer, ForeignKey('topics.id'))
+    unit = relationship(Topic, foreign_keys=unit_id)
+    delegated_id = Column(Integer, ForeignKey('topics.id'))
+    delegated = relationship(Topic, foreign_keys=delegated_id)

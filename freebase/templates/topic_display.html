@@ -49,6 +49,48 @@
                     </dd>
                 </dl>
                 {% endif %}
+                {% if topic.schema %}
+                <dl>
+                    <dt>Schema</dt>
+                    <dd>{{ to_link(topic.schema) }}</dd>
+                </dl>
+                {% endif %}
+                {% if topic.expected_type %}
+                <dl>
+                    <dt>Expected type</dt>
+                    <dd>{{ to_link(topic.expected_type) }}</dd>
+                </dl>
+                {% endif %}
+                {% if topic.unique %}
+                <dl>
+                    <dt>Is unique</dt>
+                    <dd>{{ topic.unique }}</dd>
+                </dl>
+                {% endif %}
+                {% if topic.master %}
+                <dl>
+                    <dt>Master property</dt>
+                    <dd>{{ to_link(topic.master) }}</dd>
+                </dl>
+                {% endif %}
+                {% if topic.reverse %}
+                <dl>
+                    <dt>Reverse property</dt>
+                    <dd>{{ to_link(topic.reverse) }}</dd>
+                </dl>
+                {% endif %}
+                {% if topic.unit %}
+                <dl>
+                    <dt>Unit</dt>
+                    <dd>{{ to_link(topic.unit) }}</dd>
+                </dl>
+                {% endif %}
+                {% if topic.delegated %}
+                <dl>
+                    <dt>Delegated</dt>
+                    <dd>{{ to_link(topic.delegated) }}</dd>
+                </dl>
+                {% endif %}
                 {% if topic.other_types %}
                 <dl>
                     <dt>Other types</dt>
