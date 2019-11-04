@@ -249,8 +249,9 @@ def load(
 
     with gzip.open(dump_file) as fp:
         cursor = 0
-        if os.path.isfile('progress.txt'):
-            with open('progress.txt', 'rt') as fpc:
+        progress = Path('progress.txt')
+        if progress.is_file():
+            with progress.open('rt') as fpc:
                 cursor = int(fpc.read().strip())
             logger.info('Skipping the first {} lines'.format(cursor))
         for _ in range(cursor):
