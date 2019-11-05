@@ -88,7 +88,7 @@ class Key(Base):
 
     topic_id = Column(Integer, ForeignKey('topics.id'), nullable=False, primary_key=True)
     topic = relationship(Topic, backref=backref('keys', lazy=True))
-    key = Column(String(MAX_VARCHAR_SIZE), nullable=False, primary_key=True)
+    key = Column(String(MAX_VARCHAR_SIZE), nullable=False, primary_key=True, unique=True)
 
 
 class Property(Base):

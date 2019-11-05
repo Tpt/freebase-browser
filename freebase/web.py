@@ -8,7 +8,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
 
-from freebase.model import Topic, get_db_url, Label
+from freebase.model import *
 
 app = Flask(__name__)
 engine = create_engine(get_db_url(), poolclass=NullPool)
@@ -39,7 +39,8 @@ def get_entity(path):
         else:
             topic = db.query(Topic).filter_by(textid=path).first()
             if topic is None:
-                topic = db.query(Topic).join(Topic.keys).filter_by(key=path).first()
+                key = db.query(Key).filter_by(key=path).first()
+                topic = key.topic if key is not None else None
         if topic is None:
             abort(404)
 
