@@ -95,9 +95,9 @@ class Property(Base):
     __tablename__ = 'properties'
 
     topic_id = Column(Integer, ForeignKey('topics.id'), nullable=False, primary_key=True)
-    topic = relationship(Topic, foreign_keys=topic_id, backref=backref('property', lazy=True))
+    topic = relationship(Topic, foreign_keys=topic_id, backref=backref('as_properties', lazy=True))
     schema_id = Column(Integer, ForeignKey('topics.id'))
-    schema = relationship(Topic, foreign_keys=schema_id)
+    schema = relationship(Topic, foreign_keys=schema_id, backref=backref('properties', lazy=True))
     expected_type_id = Column(Integer, ForeignKey('topics.id'))
     expected_type = relationship(Topic, foreign_keys=expected_type_id)
     unique = Column(Boolean)

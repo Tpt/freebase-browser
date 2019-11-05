@@ -1,11 +1,12 @@
 import json
+from functools import lru_cache
+from urllib.parse import quote_plus
+
 import requests
 from flask import Flask, render_template, request, abort, redirect
-from functools import lru_cache
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
-from urllib.parse import quote_plus
 
 from freebase.model import Topic, get_db_url, Label
 
@@ -72,7 +73,7 @@ def to_full_dict(topic):
     desc['jsonld'] = json.dumps(topic.jsonld)
     desc['google_url'] = google_url(topic)
     desc['wikidata_uri'] = wikidata_uri(topic)
-    for property in topic.property:
+    for property in topic.as_properties:
         if property.schema is not None:
             desc['schema'] = to_simple_dict(property.schema)
         if property.expected_type is not None:
@@ -87,6 +88,7 @@ def to_full_dict(topic):
             desc['unit'] = to_simple_dict(property.unit)
         if property.delegated is not None:
             desc['delegated'] = to_simple_dict(property.delegated)
+    desc['properties'] = [to_simple_dict(p.topic) for p in topic.properties]
     return desc
 
 

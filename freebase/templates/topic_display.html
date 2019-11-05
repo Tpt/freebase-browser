@@ -101,6 +101,18 @@
                     </dd>
                 </dl>
                 {% endif %}
+                {% if topic.properties %}
+                <dl>
+                    <dt>Properties</dt>
+                    <dd>
+                        <ul>
+                            {%- for p in topic.properties %}
+                            <li>{{ to_link(p) }}</li>
+                            {%- endfor %}
+                        </ul>
+                    </dd>
+                </dl>
+                {% endif %}
                 {% if topic.fkeys %}
                 <dl>
                     <dt>Keys</dt>
