@@ -45,7 +45,7 @@ def get_entity(path):
             abort(404)
 
         if topic.mid is not None and path != topic.mid:
-            return redirect('/freebase{}'.format(topic.mid), code=303)  # We prefer the MID
+            return redirect(topic.mid, code=303)  # We prefer the MID
 
         mimetype = request.accept_mimetypes.best_match(['text/html', 'application/ld+json', 'application/json'])
         if mimetype == 'application/json' or mimetype == 'application/ld+json':
@@ -59,7 +59,7 @@ def get_entity(path):
 def to_simple_dict(topic):
     return {
         'id': topic.textid if topic.textid else topic.mid,
-        'url': '/freebase{}'.format(topic.mid if topic.mid else topic.textid),
+        'url': topic.mid if topic.mid else topic.textid,
         'label': content_negotiation(topic.labels),
         'description': content_negotiation(topic.descriptions)
     }
@@ -134,7 +134,7 @@ def wikidata_uri(topic: Topic):
     results = requests.post('https://query.wikidata.org/sparql', data=query, headers={
         'content-type': 'application/sparql-query',
         'accept': 'application/json',
-        'user-agent': 'FreebaseBrowser/0.0 (https://tools.wmflabs.org/freebase/)'
+        'user-agent': 'FreebaseBrowser/0.0 (https://freebase.toolforge.org)'
     }).json()
     items = []
     for result in results['results']['bindings']:
@@ -153,7 +153,7 @@ def wikidata_label(topic: Topic):
     results = requests.post('https://query.wikidata.org/sparql', data=query, headers={
         'content-type': 'application/sparql-query',
         'accept': 'application/json',
-        'user-agent': 'FreebaseBrowser/0.0 (https://tools.wmflabs.org/freebase/)'
+        'user-agent': 'FreebaseBrowser/0.0 (https://freebase.toolforge.org)'
     }).json()
     for result in results['results']['bindings']:
         return Label(value=result['itemLabel']['value'], language=result['itemLabel']['value'])

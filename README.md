@@ -1,4 +1,4 @@
-Source code of https://tools.wmflabs.org/freebase
+Source code of https://freebase.toolforge.org/
 
 ## License
 
