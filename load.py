@@ -25,6 +25,15 @@ type_property_reverse_property = URIRef('http://rdf.freebase.com/ns/type.propert
 type_property_schema = URIRef('http://rdf.freebase.com/ns/type.property.schema')
 type_property_unit = URIRef('http://rdf.freebase.com/ns/type.property.unit')
 type_property_delegated = URIRef('http://rdf.freebase.com/ns/type.property.delegated')
+edge_blacklist = [
+    '/base',
+    '/common.',
+    '/dataworld.',
+    '/freebase.',
+    '/key.',
+    '/type.',
+    '/user.'
+]
 
 logger = logging.getLogger()
 
@@ -180,6 +189,24 @@ def load(
         except IntegrityError:
             execute_edit(update_query(Property).values(unique=to_bool(o)).where(Property.topic_id == s_topic_id))
 
+    def add_edge(s, p, o):
+        s_topic_id = get_topic_id_from_url(s)
+        if s_topic_id is None:
+            logger.warning('Not able to get mid for key {}'.format(s))
+            return
+        p_topic_id = get_topic_id_from_url(p)
+        if p_topic_id is None:
+            logger.warning('Not able to get mid for key {}'.format(p))
+            return
+        o_topic_id = get_topic_id_from_url(o)
+        if o_topic_id is None:
+            logger.warning('Not able to get mid for key {}'.format(o))
+            return
+        try:
+            execute_edit(insert_query(Edge), subject_id=s_topic_id, predicate_id=p_topic_id, object_id=o_topic_id)
+        except IntegrityError:
+            pass
+
     def to_bool(s):
         s = str(s)
         if s == 'true':
@@ -226,7 +253,6 @@ def load(
                     add_type(s, o, True)
                 elif p == type_object_key:
                     add_key(s, o.value)
-                """
                 if p == type_property_schema:
                     add_property_topic_id_field('schema_id', s, o)
                 elif p == type_property_expected_type:
@@ -241,6 +267,10 @@ def load(
                     add_property_topic_id_field('unit_id', s, o)
                 elif p == type_property_delegated:
                     add_property_topic_id_field('delegated_id', s, o)
+                """
+                if isinstance(o, URIRef) and o.startswith('http://rdf.freebase.com/') and p.startswith('http://rdf.freebase.com/ns/') and not any(
+                        b in p for b in edge_blacklist):
+                    add_edge(s, p, o)
             except ValueError:
                 pass
 

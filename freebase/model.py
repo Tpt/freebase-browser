@@ -109,3 +109,14 @@ class Property(Base):
     unit = relationship(Topic, foreign_keys=unit_id)
     delegated_id = Column(Integer, ForeignKey('topics.id'))
     delegated = relationship(Topic, foreign_keys=delegated_id)
+
+
+class Edge(Base):
+    __tablename__ = 'edge'
+
+    subject_id = Column(Integer, ForeignKey('topics.id'), nullable=False, primary_key=True)
+    subject = relationship(Topic, foreign_keys=subject_id, backref=backref('outgoing_edges', lazy=True))
+    predicate_id = Column(Integer, ForeignKey('topics.id'), nullable=False, primary_key=True)
+    predicate = relationship(Topic, foreign_keys=predicate_id)
+    object_id = Column(Integer, ForeignKey('topics.id'), nullable=False, primary_key=True)
+    object = relationship(Topic, foreign_keys=object_id)
