@@ -128,12 +128,11 @@
                 <dl>
                     <dt>Facts</dt>
                     <dd>
-                        <dl>
+                        <ul>
                             {%- for p,o in topic.edges %}
-                            <dt>{{ to_link(p) }}</dt>
-                            <dd>{{ to_link(o) }}</dd>
+                            <li>{{ to_link(p) }}: {{ to_link(o) }</li>
                             {%- endfor %}
-                        </dl>
+                        </ul>
                     </dd>
                 </dl>
                 {% endif %}
