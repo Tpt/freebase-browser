@@ -2,7 +2,7 @@ Source code of https://freebase.toolforge.org/
 
 ## License
 
-Copyright 2019 Thomas Pellissier Tanon
+Copyright 2019-2021 Thomas Pellissier Tanon
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
