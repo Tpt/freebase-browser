@@ -74,6 +74,7 @@ def to_full_dict(topic):
     desc['jsonld'] = json.dumps(topic.jsonld)
     desc['google_url'] = google_url(topic)
     desc['wikidata_uri'] = wikidata_uri(topic)
+    desc['edges'] = [(to_simple_dict(edge.predicate), to_simple_dict(edge.object)) for edge in topic.outgoing_edges]
     for property in topic.as_properties:
         if property.schema is not None:
             desc['schema'] = to_simple_dict(property.schema)

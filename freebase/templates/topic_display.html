@@ -124,6 +124,19 @@
                         </ul>
                     </dd>
                 </dl>
+                {% if topic.edges %}
+                <dl>
+                    <dt>Facts</dt>
+                    <dd>
+                        <dl>
+                            {%- for p,o in topic.edges %}
+                            <dt>{{ to_link(p) }}</dt>
+                            <dd>{{ to_link(o) }}</dd>
+                            {%- endfor %}
+                        </dl>
+                    </dd>
+                </dl>
+                {% endif %}
                 {% endif %}
                 <a href="https://web.archive.org/*/www.freebase.com{{ topic.id }}" class="card-link">Archive.org</a>
                 {% if topic.google_url %}
