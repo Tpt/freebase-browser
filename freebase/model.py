@@ -112,7 +112,7 @@ class Property(Base):
 
 
 class Edge(Base):
-    __tablename__ = 'edge'
+    __tablename__ = 'edges'
 
     subject_id = Column(Integer, ForeignKey('topics.id'), nullable=False, primary_key=True)
     subject = relationship(Topic, foreign_keys=subject_id, backref=backref('outgoing_edges', lazy=True))
