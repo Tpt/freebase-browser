@@ -31,6 +31,7 @@ edge_blacklist = [
     '/dataworld.',
     '/freebase.',
     '/key.',
+    '/kg.',
     '/type.',
     '/user.'
 ]
