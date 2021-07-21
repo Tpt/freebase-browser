@@ -1,4 +1,4 @@
 Flask>=1,<2
-rdflib>=5,<6
+rdflib>=5,<7
 sqlalchemy>=1,<2
 requests>=2,<3
